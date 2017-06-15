@@ -1,2 +1,2 @@
-# tensorflow-multi-dimensional-lstm
-Multi dimensional LSTM as described in Alex Graves' Paper https://arxiv.org/pdf/0705.2011.pdf
+# Multi Dimensional Recurrent Networks
+Tensorflow Implementation of the model described in Alex Graves' paper https://arxiv.org/pdf/0705.2011.pdf
