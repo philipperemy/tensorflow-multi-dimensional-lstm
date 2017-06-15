@@ -115,38 +115,35 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
         states_ta = tf.TensorArray(dtype=tf.float32, size=h * w + 1, name='state_ta', clear_after_read=False)
         outputs_ta = tf.TensorArray(dtype=tf.float32, size=h * w, name='output_ta')
 
+        # initial cell and hidden states
         states_ta = states_ta.write(h * w, LSTMStateTuple(tf.zeros([batch_size, rnn_size], tf.float32),
                                                           tf.zeros([batch_size, rnn_size], tf.float32)))
 
-        def getindex1(t, w):
-            return tf.cond(tf.less_equal(tf.constant(w), t),
-                           lambda: t - tf.constant(w),
-                           lambda: tf.constant(h * w))
+        def get_up(t_, w_):
+            return t_ - tf.constant(w_)
 
-        def getindex2(t, w):
-            return tf.cond(tf.less(tf.constant(0), tf.mod(t, tf.constant(w))),
-                           lambda: t - tf.constant(1),
-                           lambda: tf.constant(h * w))
+        def get_last(t_, w_):
+            return t_ - tf.constant(1)
 
         time = tf.constant(0)
+        zero = tf.constant(0)
 
-        def body(time, outputs_ta, states_ta):
-            constant_val = tf.constant(0)
-            stateUp = tf.cond(tf.less_equal(tf.constant(w), time),
-                              lambda: states_ta.read(getindex1(time, w)),
-                              lambda: states_ta.read(h * w))
-            stateLast = tf.cond(tf.less(constant_val, tf.mod(time, tf.constant(w))),
-                                lambda: states_ta.read(getindex2(time, w)),
-                                lambda: states_ta.read(h * w))
+        def body(time_, outputs_ta_, states_ta_):
+            state_up = tf.cond(tf.less_equal(tf.constant(w), time_),
+                               lambda: states_ta_.read(get_up(time_, w)),
+                               lambda: states_ta_.read(h * w))
+            state_last = tf.cond(tf.less(zero, tf.mod(time_, tf.constant(w))),
+                                 lambda: states_ta_.read(get_last(time_, w)),
+                                 lambda: states_ta_.read(h * w))
 
-            currentState = stateUp[0], stateLast[0], stateUp[1], stateLast[1]
-            out, state = cell(inputs_ta.read(time), currentState)
-            outputs_ta = outputs_ta.write(time, out)
-            states_ta = states_ta.write(time, state)
-            return time + 1, outputs_ta, states_ta
+            current_state = state_up[0], state_last[0], state_up[1], state_last[1]
+            out, state = cell(inputs_ta.read(time_), current_state)
+            outputs_ta_ = outputs_ta_.write(time_, out)
+            states_ta_ = states_ta_.write(time_, state)
+            return time_ + 1, outputs_ta_, states_ta_
 
-        def condition(time, outputs_ta, states_ta):
-            return tf.less(time, tf.constant(h * w))
+        def condition(time_, outputs_ta_, states_ta_):
+            return tf.less(time_, tf.constant(h * w))
 
         result, outputs_ta, states_ta = tf.while_loop(condition, body, [time, outputs_ta, states_ta],
                                                       parallel_iterations=1)
