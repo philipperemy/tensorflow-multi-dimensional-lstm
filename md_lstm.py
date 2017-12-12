@@ -81,7 +81,7 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
         dims=[False,True,True,False] => true means reverse dimension
     @param scope_n : the scope
 
-    returns [batch,h/sh[0],w/sh[1],channels*sh[0]*sh[1]] the output of the lstm
+    returns [batch,h/sh[0],w/sh[1],rnn_size] the output of the lstm
     """
     with tf.variable_scope("MultiDimensionalLSTMCell-" + scope_n):
         cell = MultiDimensionalLSTMCell(rnn_size)
