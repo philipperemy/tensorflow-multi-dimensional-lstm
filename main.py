@@ -64,6 +64,9 @@ def run(m_id):
 
     sess = tf.Session(config=tf.ConfigProto(log_device_placement=False))
     sess.run(tf.global_variables_initializer())
+    
+    train_writer = tf.summary.FileWriter('Tensorboard_out' + '/MDLSTM',sess.graph)
+    #train_writer.add_graph(sess.graph)
 
     steps = 100000
     for i in range(steps):
