@@ -27,8 +27,16 @@ to input warping, and the ability to access contextual information, are also des
 ```
 git clone git@github.com:philipperemy/tensorflow-multi-dimensional-lstm.git
 cd tensorflow-multi-dimensional-lstm
-sudo pip install -r requirements.txt
-python main.py
+
+# create a new virtual python environment
+deactivate
+virtualenv -p python3 venv
+source venv/bin/activate
+
+pip3 install -r requirements.txt
+
+# start the training with MD-LSTM. 0 is for LSTM, 1 is for MD-LSTM.
+python3 main.py 1
 ```
 
 
