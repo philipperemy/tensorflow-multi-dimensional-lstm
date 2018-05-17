@@ -56,7 +56,6 @@ def run(m_id):
         st = time()
         batch_x = np.expand_dims(batch[0], axis=3)
         batch_y = np.expand_dims(batch[1], axis=3)
-        batch_t = batch[2]
 
         if not use_multi_dimensional_lstm and i == 0:
             print('Shuffling the batch in the height dimension for the standard LSTM.'
@@ -74,9 +73,8 @@ def run(m_id):
                                                                                   time() - st, rl))
 
         if i % 50 == 0:
-            pred = sess.run(model_out, feed_dict={x: batch_x})[0].squeeze()
-            print(pred.shape)
-            visualise_mat(pred)
+            visualise_mat(sess.run(model_out, feed_dict={x: batch_x})[0].squeeze())
+            visualise_mat(batch_y[0].squeeze())
 
 
 if __name__ == '__main__':
