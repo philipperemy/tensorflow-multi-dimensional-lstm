@@ -40,8 +40,14 @@ def next_batch(bs, h, w, anisotropy=True):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
-    for alpha in [-4.0, -2.0, -0.0]:
-        out = gaussian_random_field(pk=lambda k: k ** alpha, size1=256, size2=256, anisotropy=False)
+    for alpha in [-4.0]:
+        out = gaussian_random_field(pk=lambda k: k ** alpha, size1=32, size2=32, anisotropy=True)
         plt.figure()
         plt.imshow(out.real, cmap='jet', interpolation='none')
     plt.show()
+
+    # anisotropy: vertical or horizontal
+    # so having a LSTM vertical or a LSTM horizontal is sufficient
+
+    # isotropy: random gaussian fields have terms that depend on all the directions (not only horizontal or vertical)
+    # so MD LSTM should help there.

@@ -9,21 +9,11 @@ from data_gen import next_batch
 from md_lstm import *
 
 
-def create_weight_variable(name, shape):
-    initializer = tf.contrib.layers.xavier_initializer_conv2d()
-    variable = tf.Variable(initializer(shape=shape), name=name)
-    return variable
+# Anisotropy: vertical or horizontal
+# - Having a LSTM vertical or a LSTM horizontal is sufficient.
 
-
-def create_bias_variable(name, shape):
-    initializer = tf.constant_initializer(value=0.0, dtype=tf.float32)
-    return tf.Variable(initializer(shape=shape), name)
-
-
-def multi_dimensional_lstm(input_data, rnn_size):
-    rnn_out, _ = multi_dimensional_rnn_while_loop(rnn_size=rnn_size, input_data=input_data, sh=[1, 1])
-    return rnn_out
-
+# Isotropy: random gaussian fields have terms that depend on all the directions (not only horizontal or vertical)
+# - MD LSTM on all four directions should help there.
 
 def standard_lstm(input_data, rnn_size):
     b, h, w, c = input_data.get_shape().as_list()
@@ -39,7 +29,7 @@ def run(m_id):
     use_multi_dimensional_lstm = (m_id == 1)
 
     anisotropy = False
-    learning_rate = 0.001 * 0.5
+    learning_rate = 0.001
     batch_size = 16
     h = 32
     w = 32
@@ -47,12 +37,12 @@ def run(m_id):
     x = tf.placeholder(tf.float32, [batch_size, h, w, channels])
     y = tf.placeholder(tf.float32, [batch_size, h, w, channels])
 
-    hidden_size = 4
+    hidden_size = 32
     if use_multi_dimensional_lstm:
-        print('Using Multi Dimensional LSTM !')
+        print('Using Multi Dimensional LSTM!')
         rnn_out, _ = multi_dimensional_rnn_while_loop(rnn_size=hidden_size, input_data=x, sh=[1, 1])
     else:
-        print('Using Standard LSTM !')
+        print('Using Standard LSTM!')
         rnn_out = standard_lstm(input_data=x, rnn_size=hidden_size)
 
     model_out = slim.fully_connected(inputs=rnn_out,
@@ -64,9 +54,6 @@ def run(m_id):
 
     sess = tf.Session(config=tf.ConfigProto(log_device_placement=False))
     sess.run(tf.global_variables_initializer())
-    
-    train_writer = tf.summary.FileWriter('Tensorboard_out' + '/MDLSTM',sess.graph)
-    #train_writer.add_graph(sess.graph)
 
     steps = 100000
     for i in range(steps):
@@ -81,7 +68,6 @@ def run(m_id):
             perms = np.random.permutation(list(range(w)))
             batch_x = batch_x[:, perms, :, :]
             batch_y = batch_y[:, perms, :, :]
-            pass
 
         loss_val, _ = sess.run([loss, grad_update], feed_dict={x: batch_x, y: batch_y})
         print('steps = {0} | loss = {1:.3f} | time {2:.3f}'.format(str(i).zfill(3),
