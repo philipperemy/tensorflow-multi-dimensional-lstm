@@ -103,6 +103,7 @@ No surprise that MD LSTM performs the best here. It has direct connections betwe
 
 ## Limitations
 - I could test it successfully with 32x32 matrices but the implementation is far from being well optimised.
+- This implementation can become numerically unstable quite easily.
 
 ## Contributions
 
