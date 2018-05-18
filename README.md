@@ -39,6 +39,56 @@ python trainer.py --model_type HORIZONTAL_SD_LSTM
 python trainer.py --model_type SNAKE_SD_LSTM
 ```
 
+## Random diagonal Task
+
+The random diagonal task consists in initializing a matrix with values very close to 0 except two which are set to 1. Those two values are on a straight line parallel to the diagonal of the matrix. The idea is to predict where those two values are. Here are some examples:
+
+```
+____________
+|          |
+|x         |
+| x        |
+|          |
+|__________|
+
+
+____________
+|          |
+|          |
+|     x    |
+|      x   |
+|__________|
+
+____________
+|          |
+| x        |
+|  x       |
+|          |
+|__________|
+
+```
+
+- A simple recurrent model going vertical or horizontal cannot predict any locations of x. This model is called `HORIZONTAL_SD_LSTM`.
+- If the matrix is flattened as one single vector, then the first location of x still cannot be predicted. However, a recurrent model should understand that the second x always comes after the first x (width+1 steps). (Model is `SNAKE_SD_LSTM`).
+- When predicting the second location of x, a MD recurrent model has a full view of the TOP LEFT corner. In that case, it should understand that when the first x is in the bottom right of its window, the second x will be next on the diagonal axis.
+
+A Grid LSTM cannot read from the TOP_LEFT corner. It cannot predict the first x,
+But can definitely use the information of the first x to predict with 100% the second.
+
+
+<p float="left">
+  <img src="assets/md_pred_0.png" width="300" />
+  <img src="assets/md_truth_0.png" width="300" /> 
+  <br><i>MD LSTM predictions (left) and ground truth (right) before training.</i>
+</p>
+
+<p float="left">
+  <img src="assets/md_pred_500.png" width="300" />
+  <img src="assets/md_truth_500.png" width="300" /> 
+  <br><i>MD LSTM predictions (left) and ground truth (right) after training.</i>
+</p>
+
+
 
 ## Special Thanks
 - A big *thank you* to [Mosnoi Ion](https://stackoverflow.com/questions/42071074/multidimentional-lstm-tensorflow) who provided the first skeleton of this MD LSTM.
