@@ -68,12 +68,10 @@ ____________
 
 ```
 
-- A simple recurrent model going vertical or horizontal cannot predict any locations of x. This model is called `HORIZONTAL_SD_LSTM`.
+- A simple recurrent model going vertical or horizontal cannot predict any locations of x. This model is called `HORIZONTAL_SD_LSTM`. It should perform the worst.
 - If the matrix is flattened as one single vector, then the first location of x still cannot be predicted. However, a recurrent model should understand that the second x always comes after the first x (width+1 steps). (Model is `SNAKE_SD_LSTM`).
-- When predicting the second location of x, a MD recurrent model has a full view of the TOP LEFT corner. In that case, it should understand that when the first x is in the bottom right of its window, the second x will be next on the diagonal axis.
+- When predicting the second location of x, a MD recurrent model has a full view of the TOP LEFT corner. In that case, it should understand that when the first x is in the bottom right of its window, the second x will be next on the diagonal axis. Of course the first location x still cannot be predicted at all with this MD model.
 
-A Grid LSTM cannot read from the TOP_LEFT corner. It cannot predict the first x,
-But can definitely use the information of the first x to predict with 100% the second.
 
 
 <p float="left">
@@ -87,6 +85,19 @@ But can definitely use the information of the first x to predict with 100% the s
   <img src="assets/md_truth_500.png" width="300" /> 
   <br><i>MD LSTM predictions (left) and ground truth (right) after training.</i>
 </p>
+
+<p align="center">
+  <b>Overall loss of the random diagonal task (loss applied on all the elements of the inputs)</b><br><br>
+  <img src="assets/md_lstm2.png" width="500" />
+</p>
+
+
+<p align="center">
+  <b>Overall loss of the random diagonal task (loss applied only on the location of the second x)</b><br><br>
+  <img src="assets/md_lstm.png" width="500" /> 
+</p>
+
+
 
 
 
