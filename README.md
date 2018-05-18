@@ -29,18 +29,15 @@ git clone git@github.com:philipperemy/tensorflow-multi-dimensional-lstm.git
 cd tensorflow-multi-dimensional-lstm
 
 # create a new virtual python environment
-deactivate
 virtualenv -p python3 venv
 source venv/bin/activate
+pip install -r requirements.txt
 
-pip3 install -r requirements.txt
-
-# start the training with MD-LSTM. 0 is for LSTM, 1 is for MD-LSTM.
-python3 main.py 1
+# usage: trainer.py [-h] --model_type {MD_LSTM,HORIZONTAL_SD_LSTM,SNAKE_SD_LSTM}
+python trainer.py --model_type MD_LSTM
+python trainer.py --model_type HORIZONTAL_SD_LSTM
+python trainer.py --model_type SNAKE_SD_LSTM
 ```
-
-
-
 
 
 ## Special Thanks
