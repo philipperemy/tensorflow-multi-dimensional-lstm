@@ -63,11 +63,11 @@ def run(model_type='md_lstm'):
     steps = 100000
     for i in range(steps):
         batch = next_batch(batch_size, h, w)
-        st = time()
+        grad_step_start_time = time()
         batch_x = np.expand_dims(batch[0], axis=3)
         batch_y = np.expand_dims(batch[1], axis=3)
 
-        mo, loss_val, _ = sess.run([model_out, loss, grad_update], feed_dict={x: batch_x, y: batch_y})
+        model_preds, tot_loss_value, _ = sess.run([model_out, loss, grad_update], feed_dict={x: batch_x, y: batch_y})
 
         """
         ____________
@@ -83,11 +83,11 @@ def run(model_type='md_lstm'):
         # extract the predictions for the second x
         relevant_pred_index = get_relevant_prediction_index(batch_y)
         true_rel = np.array([batch_y[i, x, y, 0] for (i, (y, x)) in enumerate(relevant_pred_index)])
-        pred_rel = np.array([mo[i, x, y, 0] for (i, (y, x)) in enumerate(relevant_pred_index)])
+        pred_rel = np.array([model_preds[i, x, y, 0] for (i, (y, x)) in enumerate(relevant_pred_index)])
         relevant_loss = np.mean(np.square(true_rel - pred_rel))
 
         format_str = 'steps = {0} | overall loss = {1:.3f} | time {2:.3f} | relevant loss = {3:.3f}'
-        logger.info(format_str.format(str(i).zfill(3), loss_val, time() - st, relevant_loss))
+        logger.info(format_str.format(str(i).zfill(3), tot_loss_value, time() - grad_step_start_time, relevant_loss))
 
         if i % 500 == 0:
             visualise_mat(sess.run(model_out, feed_dict={x: batch_x})[0].squeeze())

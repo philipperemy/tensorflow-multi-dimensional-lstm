@@ -54,7 +54,7 @@ def next_batch(bs, h, w):
         x.append(random_short_diagonal_matrix(h, w))
     x = np.array(x)
     y = np.roll(x, shift=-1, axis=2)
-    t = find_target_for_tensor(y)
+    t = get_relevant_prediction_index(y)
     return x, y, t
 
 
@@ -71,7 +71,7 @@ def find_target_for_matrix(y_):
     return w_y, h_y
 
 
-def find_target_for_tensor(y_):
+def get_relevant_prediction_index(y_):
     a = []
     for yy_ in y_:
         a.append(find_target_for_matrix(yy_))
