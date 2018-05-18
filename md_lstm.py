@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.contrib.rnn import RNNCell, LSTMStateTuple
-#from tensorflow.contrib.rnn.python.ops.core_rnn_cell_impl import _linear
-from tensorflow.python.ops.rnn_cell_impl import _linear
+from tensorflow.contrib.rnn.python.ops.core_rnn_cell import _linear
+from tensorflow.python.ops.rnn import dynamic_rnn
 
 
 def ln(tensor, scope=None, epsilon=1e-5):
@@ -84,13 +84,13 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
 
     returns [batch,h/sh[0],w/sh[1],rnn_size] the output of the lstm
     """
-    
+
     with tf.variable_scope("MultiDimensionalLSTMCell-" + scope_n):
-        
+
         # Create multidimensional cell with selected size
         cell = MultiDimensionalLSTMCell(rnn_size)
 
-        # Get the shape of the imput (batch_size, x, y, channels)
+        # Get the shape of the input (batch_size, x, y, channels)
         shape = input_data.get_shape().as_list()
         batch_size = shape[0]
         X_dim = shape[1]
@@ -101,8 +101,8 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
         Y_win = sh[1]
         # Get the runtime batch size
         batch_size_runtime = tf.shape(input_data)[0]
-        
-        # If the imput cannot be exactly sampled by the window, we patch it with zeros
+
+        # If the input cannot be exactly sampled by the window, we patch it with zeros
         if X_dim % X_win != 0:
             # Get offset size
             offset = tf.zeros([batch_size_runtime, X_win - (X_dim % X_win), Y_dim, channels])
@@ -112,7 +112,7 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
             shape = input_data.get_shape().as_list()
             # Update shape value
             X_dim = shape[1]
-            
+
         # The same but for Y axis
         if Y_dim % Y_win != 0:
             # Get offset size
@@ -126,32 +126,29 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
 
         # Get the steps to perform in X and Y axis
         h, w = int(X_dim / X_win), int(Y_dim / Y_win)
-        
+
         # Get the number of features (total number of imput values per step)
         features = Y_win * X_win * channels
-        
-        
 
-    
         # Reshape input data to a tensor containing the step indexes and features inputs
         # The batch size is inferred from the tensor size
         x = tf.reshape(input_data, [batch_size_runtime, h, w, features])
-        
+
         # Reverse the selected dimensions
         if dims is not None:
             assert dims[0] is False and dims[3] is False
             x = tf.reverse(x, dims)
-            
+
         # Reorder inputs to (h, w, batch_size, features)
         x = tf.transpose(x, [1, 2, 0, 3])
         # Reshape to a one dimensional tensor of (h*w*batch_size , features)
         x = tf.reshape(x, [-1, features])
         # Split tensor into h*w tensors of size (batch_size , features)
         x = tf.split(axis=0, num_or_size_splits=h * w, value=x)
-        
+
         # Create an input tensor array (literally an array of tensors) to use inside the loop
         inputs_ta = tf.TensorArray(dtype=tf.float32, size=h * w, name='input_ta')
-        # Unestack the input X in the tensor array
+        # Unstack the input X in the tensor array
         inputs_ta = inputs_ta.unstack(x)
         # Create an input tensor array for the states
         states_ta = tf.TensorArray(dtype=tf.float32, size=h * w + 1, name='state_ta', clear_after_read=False)
@@ -163,11 +160,10 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
         states_ta = states_ta.write(h * w, LSTMStateTuple(tf.zeros([batch_size_runtime, rnn_size], tf.float32),
                                                           tf.zeros([batch_size_runtime, rnn_size], tf.float32)))
 
-
-        
         # Function to get the sample skipping one row
         def get_up(t_, w_):
             return t_ - tf.constant(w_)
+
         # Function to get the previous sample
         def get_last(t_, w_):
             return t_ - tf.constant(1)
@@ -176,18 +172,18 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
         time = tf.constant(0)
         zero = tf.constant(0)
 
-        # Body of the while loop operation that aplies the MD LSTM
+        # Body of the while loop operation that applies the MD LSTM
         def body(time_, outputs_ta_, states_ta_):
-            
+
             # If the current position is less or equal than the width, we are in the first row
             # and we need to read the zero state we added in row (h*w). 
-            # If not, get the sample located at a width dstance.
+            # If not, get the sample located at a width distance.
             state_up = tf.cond(tf.less_equal(time_, tf.constant(w)),
                                lambda: states_ta_.read(h * w),
-                              lambda: states_ta_.read(get_up(time_, w)))
-            
+                               lambda: states_ta_.read(get_up(time_, w)))
+
             # If it is the first step we read the zero state if not we read the inmediate last
-            state_last = tf.cond(tf.less(zero, tf.mod(time_, tf.constant(w)) ),
+            state_last = tf.cond(tf.less(zero, tf.mod(time_, tf.constant(w))),
                                  lambda: states_ta_.read(get_last(time_, w)),
                                  lambda: states_ta_.read(h * w))
 
@@ -199,12 +195,11 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
             outputs_ta_ = outputs_ta_.write(time_, out)
             # And save the output state to the state tensor array
             states_ta_ = states_ta_.write(time_, state)
-            
+
             # Return outputs and incremented time step 
             return time_ + 1, outputs_ta_, states_ta_
 
-        
-        # Loop output condition. The index, given by the time, should be less than the 
+        # Loop output condition. The index, given by the time, should be less than the
         # total number of steps defined within the image
         def condition(time_, outputs_ta_, states_ta_):
             return tf.less(time_, tf.constant(h * w))
@@ -213,13 +208,13 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
         result, outputs_ta, states_ta = tf.while_loop(condition, body, [time, outputs_ta, states_ta],
                                                       parallel_iterations=1)
 
-        # Extract the output tensors from the processesd tensor array
+        # Extract the output tensors from the processesed tensor array
         outputs = outputs_ta.stack()
         states = states_ta.stack()
 
-        # Reshape outputs to match the shape of the imput
+        # Reshape outputs to match the shape of the input
         y = tf.reshape(outputs, [h, w, batch_size_runtime, rnn_size])
-        
+
         # Reorder te dimensions to match the input
         y = tf.transpose(y, [2, 0, 1, 3])
         # Reverse if selected
@@ -228,3 +223,27 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
 
         # Return the output and the inner states
         return y, states
+
+
+def horizontal_standard_lstm(input_data, rnn_size):
+    # input is (b, h, w, c)
+    b, h, w, c = input_data.get_shape().as_list()
+    # transpose = swap h and w.
+    new_input_data = tf.reshape(input_data, (b * h, w, c))  # horizontal.
+    rnn_out, _ = dynamic_rnn(tf.contrib.rnn.LSTMCell(rnn_size),
+                             inputs=new_input_data,
+                             dtype=tf.float32)
+    rnn_out = tf.reshape(rnn_out, (b, h, w, rnn_size))
+    return rnn_out
+
+
+def snake_standard_lstm(input_data, rnn_size):
+    # input is (b, h, w, c)
+    b, h, w, c = input_data.get_shape().as_list()
+    # transpose = swap h and w.
+    new_input_data = tf.reshape(input_data, (b, w * h, c))  # snake.
+    rnn_out, _ = dynamic_rnn(tf.contrib.rnn.LSTMCell(rnn_size),
+                             inputs=new_input_data,
+                             dtype=tf.float32)
+    rnn_out = tf.reshape(rnn_out, (b, h, w, rnn_size))
+    return rnn_out
