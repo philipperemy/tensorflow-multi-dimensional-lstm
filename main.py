@@ -5,7 +5,7 @@ import logging
 import numpy as np
 import tensorflow.contrib.slim as slim
 
-from data_gen_corr_fields import next_batch, visualise_mat, get_relevant_prediction_index
+from data_random_short_diagonal import next_batch, visualise_mat, get_relevant_prediction_index
 from md_lstm import *
 from md_lstm import standard_lstm
 
