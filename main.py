@@ -1,43 +1,53 @@
-import sys
 from time import time
 
+import argparse
+import logging
 import numpy as np
 import tensorflow.contrib.slim as slim
-from tensorflow.python.ops.rnn import dynamic_rnn
 
 from data_gen_corr_fields import next_batch, visualise_mat, find_target_for_tensor
 from md_lstm import *
+from md_lstm import standard_lstm
+
+logger = logging.getLogger(__name__)
 
 
-def standard_lstm(input_data, rnn_size):
-    # input is (b, h, w, c)
-    b, h, w, c = input_data.get_shape().as_list()
-    # transpose = swap h and w.
-    new_input_data = tf.reshape(input_data, (b * h, w, c))  # vertical
-    rnn_out, _ = dynamic_rnn(tf.contrib.rnn.LSTMCell(rnn_size),
-                             inputs=new_input_data,
-                             dtype=tf.float32)
-    rnn_out = tf.reshape(rnn_out, (b, h, w, rnn_size))
-    return rnn_out
+def get_arguments(parser: argparse.ArgumentParser):
+    args = None
+    try:
+        args = parser.parse_args()
+    except Exception:
+        parser.print_help()
+        exit(1)
+    return args
 
 
-def run(m_id):
-    use_multi_dimensional_lstm = (m_id == 1)
+def get_script_arguments():
+    parser = argparse.ArgumentParser(description='MD LSTM trainer.')
+    parser.add_argument('--model_type', required=True, help='Valid model types are [lstm, md_lstm].')
+    args = get_arguments(parser)
+    logger.info(f'Script inputs: {args}.')
+    return args
+
+
+def run(model_type='md_lstm'):
+    use_multi_dimensional_lstm = (model_type == 'md_lstm')
 
     learning_rate = 0.01
     batch_size = 16
     h = 8
     w = 8
     channels = 1
+    hidden_size = 16
+
     x = tf.placeholder(tf.float32, [batch_size, h, w, channels])
     y = tf.placeholder(tf.float32, [batch_size, h, w, channels])
 
-    hidden_size = 16
     if use_multi_dimensional_lstm:
-        print('Using Multi Dimensional LSTM!')
+        logger.info('Using Multi Dimensional LSTM.')
         rnn_out, _ = multi_dimensional_rnn_while_loop(rnn_size=hidden_size, input_data=x, sh=[1, 1])
     else:
-        print('Using Standard LSTM!')
+        logger.info('Using Standard LSTM.')
         rnn_out = standard_lstm(input_data=x, rnn_size=hidden_size)
 
     model_out = slim.fully_connected(inputs=rnn_out,
@@ -57,22 +67,39 @@ def run(m_id):
         batch_x = np.expand_dims(batch[0], axis=3)
         batch_y = np.expand_dims(batch[1], axis=3)
 
-        mo, loss_val, _ = sess.run([model_out, loss, grad_update], feed_dict={x: batch_x,
-                                                                              y: batch_y})
+        mo, loss_val, _ = sess.run([model_out, loss, grad_update], feed_dict={x: batch_x, y: batch_y})
 
-        ys = np.array([batch_y[i, x, y, 0] for (i, (y, x)) in enumerate(find_target_for_tensor(batch_y))])
-        mos = np.array([mo[i, x, y, 0] for (i, (y, x)) in enumerate(find_target_for_tensor(batch_y))])
-        rl = np.mean(np.square(ys - mos))
-        print('steps = {0} | loss = {1:.3f} | time {2:.3f} | rl = {3:.3f}'.format(str(i).zfill(3),
-                                                                                  loss_val,
-                                                                                  time() - st, rl))
+        target_of_interest = find_target_for_tensor(batch_y)
+
+        """
+        ____________
+        |          |
+        |          |
+        |     x    |
+        |      x <----- extract this prediction. Real loss is only computed for this value.
+        |__________|    we don't care about the rest (even though the model is trained on all values
+                        for simplicity). A standard LSTM should have a very high value for real loss
+                        whereas a MD LSTM (which can see all the TOP LEFT corner) should perform well. 
+        """
+
+        # extract the predictions for the second x
+        ground_truth = np.array([batch_y[i, x, y, 0] for (i, (y, x)) in enumerate(target_of_interest)])
+        model_pred = np.array([mo[i, x, y, 0] for (i, (y, x)) in enumerate(target_of_interest)])
+        real_loss = np.mean(np.square(ground_truth - model_pred))
+
+        format_str = 'steps = {0} | overall loss = {1:.3f} | time {2:.3f} | real loss = {3:.3f}'
+        logger.info(format_str.format(str(i).zfill(3), loss_val, time() - st, real_loss))
 
         if i % 500 == 0:
             visualise_mat(sess.run(model_out, feed_dict={x: batch_x})[0].squeeze())
             visualise_mat(batch_y[0].squeeze())
 
 
+def main():
+    args = get_script_arguments()
+    logging.basicConfig(format='%(asctime)12s - %(levelname)s - %(message)s', level=logging.INFO)
+    run(args.model_type)
+
+
 if __name__ == '__main__':
-    assert len(sys.argv) == 2, 'Please specify Model 0: LSTM, 1: MD LSTM'
-    model_id = int(sys.argv[1])
-    run(model_id)
+    main()
