@@ -67,7 +67,7 @@ def run(m_id):
                                                                                   loss_val,
                                                                                   time() - st, rl))
 
-        if i % 5000 == 0:
+        if i % 500 == 0:
             visualise_mat(sess.run(model_out, feed_dict={x: batch_x})[0].squeeze())
             visualise_mat(batch_y[0].squeeze())
 
