@@ -12,6 +12,36 @@ from md_lstm import *
 logger = logging.getLogger(__name__)
 
 
+def get_script_arguments():
+    parser = argparse.ArgumentParser(description='MD LSTM trainer.')
+    parser.add_argument('--model_type', required=True, type=ModelType.from_string,
+                        choices=list(ModelType), help='Model type.')
+    parser.add_argument('--enable_plotting', action='store_true')
+
+    args = get_arguments(parser)
+    logger.info('Script inputs: {}.'.format(args))
+    return args
+
+
+class FileLogger(object):
+    def __init__(self, full_filename, headers):
+        self._headers = headers
+        self._out_fp = open(full_filename, 'w')
+        self._write(headers)
+
+    def write(self, line):
+        assert len(line) == len(self._headers)
+        self._write(line)
+
+    def close(self):
+        self._out_fp.close()
+
+    def _write(self, arr):
+        arr = [str(e) for e in arr]
+        self._out_fp.write(' '.join(arr) + '\n')
+        self._out_fp.flush()
+
+
 class ModelType(Enum):
     MD_LSTM = 'MD_LSTM'
     HORIZONTAL_SD_LSTM = 'HORIZONTAL_SD_LSTM'
@@ -35,17 +65,6 @@ def get_arguments(parser: argparse.ArgumentParser):
     except Exception:
         parser.print_help()
         exit(1)
-    return args
-
-
-def get_script_arguments():
-    parser = argparse.ArgumentParser(description='MD LSTM trainer.')
-    parser.add_argument('--model_type', required=True, type=ModelType.from_string,
-                        choices=list(ModelType), help='Model type.')
-    parser.add_argument('--enable_plotting', action='store_true')
-
-    args = get_arguments(parser)
-    logger.info('Script inputs: {}.'.format(args))
     return args
 
 
@@ -81,7 +100,11 @@ def run(model_type='md_lstm', enable_plotting=True):
     sess = tf.Session(config=tf.ConfigProto(log_device_placement=False))
     sess.run(tf.global_variables_initializer())
 
-    steps = 100000
+    fp = FileLogger('out_{}.tsv'.format(model_type), ['steps_{}'.format(model_type),
+                                                      'overall_loss_{}'.format(model_type),
+                                                      'time_{}'.format(model_type),
+                                                      'relevant_loss_{}'.format(model_type)])
+    steps = 1000
     for i in range(steps):
         batch = next_batch(batch_size, h, w)
         grad_step_start_time = time()
@@ -107,8 +130,10 @@ def run(model_type='md_lstm', enable_plotting=True):
         pred_rel = np.array([model_preds[i, x, y, 0] for (i, (y, x)) in enumerate(relevant_pred_index)])
         relevant_loss = np.mean(np.square(true_rel - pred_rel))
 
+        values = [str(i).zfill(4), tot_loss_value, time() - grad_step_start_time, relevant_loss]
         format_str = 'steps = {0} | overall loss = {1:.3f} | time {2:.3f} | relevant loss = {3:.3f}'
-        logger.info(format_str.format(str(i).zfill(4), tot_loss_value, time() - grad_step_start_time, relevant_loss))
+        logger.info(format_str.format(*values))
+        fp.write(values)
 
         display_matplotlib_every = 500
         if enable_plotting and i % display_matplotlib_every == 0 and i != 0:
