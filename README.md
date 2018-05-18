@@ -72,6 +72,20 @@ ____________
 - If the matrix is flattened as one single vector, then the first location of x still cannot be predicted. However, a recurrent model should understand that the second x always comes after the first x (width+1 steps). (Model is `SNAKE_SD_LSTM`).
 - When predicting the second location of x, a MD recurrent model has a full view of the TOP LEFT corner. In that case, it should understand that when the first x is in the bottom right of its window, the second x will be next on the diagonal axis. Of course the first location x still cannot be predicted at all with this MD model.
 
+After training on this task for 8x8 matrices, the losses look like this:
+
+<p align="center">
+  <b>Overall loss of the random diagonal task (loss applied on all the elements of the inputs)</b><br><br>
+  <img src="assets/md_lstm2.png" width="500" />
+</p>
+
+
+<p align="center">
+  <b>Overall loss of the random diagonal task (loss applied only on the location of the second x)</b><br><br>
+  <img src="assets/md_lstm.png" width="500" /> 
+</p>
+
+No surprise that MD LSTM performs the best here. It has direct connections between the grid cell that contains the first x and the second x (2 connections). The snake LSTM has width+1 = 9 steps between the two x. As expected, the vertical LSTM does not learn anything apart from outputting values very close to 0.
 
 
 <p float="left">
@@ -86,16 +100,6 @@ ____________
   <br><i>MD LSTM predictions (left) and ground truth (right) after training.</i>
 </p>
 
-<p align="center">
-  <b>Overall loss of the random diagonal task (loss applied on all the elements of the inputs)</b><br><br>
-  <img src="assets/md_lstm2.png" width="500" />
-</p>
-
-
-<p align="center">
-  <b>Overall loss of the random diagonal task (loss applied only on the location of the second x)</b><br><br>
-  <img src="assets/md_lstm.png" width="500" /> 
-</p>
 
 
 
