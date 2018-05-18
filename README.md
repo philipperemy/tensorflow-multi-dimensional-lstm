@@ -11,11 +11,7 @@ Tensorflow Implementation of the model described in Alex Graves' paper https://a
 
 ## What is MD LSTM?
 
-> Recurrent neural networks (RNNs) have proved effective at one dimensional sequence learning tasks, such as speech and online handwriting recognition. Some of the properties that make RNNs suitable for such tasks, for example robustness
-to input warping, and the ability to access contextual information, are also desirable in multidimensional domains. However, there has so far been no direct way of applying RNNs to data with more than one spatio-temporal dimension. This paper introduces multi-dimensional recurrent neural networks (MDRNNs), thereby extending the potential applicability of RNNs to vision, video processing, medical imaging and many other areas, while avoiding the scaling problems that have plagued other multi-dimensional models. Experimental results are provided for two image segmentation tasks.
-
-
-> -- Alex Graves, Santiago Fernandez, Jurgen Schmidhuber
+Basically a LSTM that is multidirectional, for example, that can operate on a 2D grid. Here's a figure describing the way it works:
 
 <p align="center">
   <img src="assets/2d_lstm_1.png" width="300">
@@ -104,6 +100,7 @@ No surprise that MD LSTM performs the best here. It has direct connections betwe
 ## Limitations
 - I could test it successfully with 32x32 matrices but the implementation is far from being well optimised.
 - This implementation can become numerically unstable quite easily.
+- I've noticed that inputs should be != 0. Otherwise some gradients are nan. So consider `inputs += eps` in case.
 
 ## Contributions
 
