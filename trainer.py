@@ -45,7 +45,7 @@ def get_script_arguments():
     parser.add_argument('--enable_plotting', action='store_true')
 
     args = get_arguments(parser)
-    logger.info(f'Script inputs: {args}.')
+    logger.info('Script inputs: {}.'.format(args))
     return args
 
 
