@@ -42,16 +42,18 @@ def get_script_arguments():
     parser = argparse.ArgumentParser(description='MD LSTM trainer.')
     parser.add_argument('--model_type', required=True, type=ModelType.from_string,
                         choices=list(ModelType), help='Model type.')
+    parser.add_argument('--enable_plotting', action='store_true')
+
     args = get_arguments(parser)
     logger.info(f'Script inputs: {args}.')
     return args
 
 
-def run(model_type='md_lstm'):
+def run(model_type='md_lstm', enable_plotting=True):
     learning_rate = 0.01
     batch_size = 16
-    h = 8
-    w = 8
+    h = 16
+    w = 16
     channels = 1
     hidden_size = 16
 
@@ -109,7 +111,7 @@ def run(model_type='md_lstm'):
         logger.info(format_str.format(str(i).zfill(4), tot_loss_value, time() - grad_step_start_time, relevant_loss))
 
         display_matplotlib_every = 500
-        if i % display_matplotlib_every == 0 and i != 0:
+        if enable_plotting and i % display_matplotlib_every == 0 and i != 0:
             visualise_mat(sess.run(model_out, feed_dict={x: batch_x})[0].squeeze())
             visualise_mat(batch_y[0].squeeze())
 
@@ -117,7 +119,7 @@ def run(model_type='md_lstm'):
 def main():
     args = get_script_arguments()
     logging.basicConfig(format='%(asctime)12s - %(levelname)s - %(message)s', level=logging.INFO)
-    run(args.model_type)
+    run(args.model_type, args.enable_plotting)
 
 
 if __name__ == '__main__':
