@@ -87,7 +87,7 @@ def run(model_type='md_lstm'):
         relevant_loss = np.mean(np.square(true_rel - pred_rel))
 
         format_str = 'steps = {0} | overall loss = {1:.3f} | time {2:.3f} | relevant loss = {3:.3f}'
-        logger.info(format_str.format(str(i).zfill(3), tot_loss_value, time() - grad_step_start_time, relevant_loss))
+        logger.info(format_str.format(str(i).zfill(4), tot_loss_value, time() - grad_step_start_time, relevant_loss))
 
         if i % 500 == 0:
             visualise_mat(sess.run(model_out, feed_dict={x: batch_x})[0].squeeze())
