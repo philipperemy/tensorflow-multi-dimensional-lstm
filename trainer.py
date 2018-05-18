@@ -52,8 +52,8 @@ def get_script_arguments():
 def run(model_type='md_lstm', enable_plotting=True):
     learning_rate = 0.01
     batch_size = 16
-    h = 16
-    w = 16
+    h = 8
+    w = 8
     channels = 1
     hidden_size = 16
 
