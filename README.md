@@ -19,7 +19,7 @@ to input warping, and the ability to access contextual information, are also des
 > -- Alex Graves, Santiago Fernandez, Jurgen Schmidhuber
 
 <p align="center">
-  <img src="assets/2d_lstm_1.png" width="500">
+  <img src="assets/2d_lstm_1.png" width="300">
   <br><i>Example: 2D LSTM Architecture</i>
 </p>
 
@@ -68,6 +68,8 @@ ____________
 
 ```
 
+A model performing on this task is considered as successful if it can correctly predict the second x (it's impossible to predict the first x).
+
 - A simple recurrent model going vertical or horizontal cannot predict any locations of x. This model is called `HORIZONTAL_SD_LSTM`. It should perform the worst.
 - If the matrix is flattened as one single vector, then the first location of x still cannot be predicted. However, a recurrent model should understand that the second x always comes after the first x (width+1 steps). (Model is `SNAKE_SD_LSTM`).
 - When predicting the second location of x, a MD recurrent model has a full view of the TOP LEFT corner. In that case, it should understand that when the first x is in the bottom right of its window, the second x will be next on the diagonal axis. Of course the first location x still cannot be predicted at all with this MD model.
@@ -91,18 +93,21 @@ No surprise that MD LSTM performs the best here. It has direct connections betwe
 <p float="left">
   <img src="assets/md_pred_0.png" width="300" />
   <img src="assets/md_truth_0.png" width="300" /> 
-  <br><i>MD LSTM predictions (left) and ground truth (right) before training.</i>
+  <br><i>MD LSTM predictions (left) and ground truth (right) before training (predictions are all random).</i>
 </p>
 
 <p float="left">
   <img src="assets/md_pred_500.png" width="300" />
   <img src="assets/md_truth_500.png" width="300" /> 
-  <br><i>MD LSTM predictions (left) and ground truth (right) after training.</i>
+  <br><i>MD LSTM predictions (left) and ground truth (right) after training. As expected, the MD LSTM can only predict the second x and not the first one. That means the task is correctly predicted.</i>
 </p>
 
+## Limitations
+- I could test it successfully with 32x32 matrices but the implementation is far from being well optimised.
 
+## Contributions
 
-
+Welcome!
 
 
 ## Special Thanks
