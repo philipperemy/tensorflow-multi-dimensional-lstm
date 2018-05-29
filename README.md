@@ -1,8 +1,9 @@
 # Multi Dimensional Recurrent Networks
-Tensorflow Implementation of the model described in Alex Graves' paper https://arxiv.org/pdf/0705.2011.pdf
+Tensorflow Implementation of the model described in Alex Graves' paper https://arxiv.org/pdf/0705.2011.pdf.
 
 - [x] **Fully compatible with Tensorflow 1.7.**
 - [x] **Only 2D is supported now.**
+- [x] **[Comes with some big limitations](https://github.com/philipperemy/tensorflow-multi-dimensional-lstm#limitations).**
 
 <p align="center">
   <img src="assets/2d_lstm_1.png" width="100">
