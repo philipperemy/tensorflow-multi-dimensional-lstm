@@ -102,6 +102,8 @@ No surprise that MD LSTM performs the best here. It has direct connections betwe
 - I could test it successfully with 32x32 matrices but the implementation is far from being well optimised.
 - This implementation can become numerically unstable quite easily.
 - I've noticed that inputs should be != 0. Otherwise some gradients are nan. So consider `inputs += eps` in case.
+- It's hard to use in Keras. This implementation is in pure tensorflow.
+- It runs on a GPU but the code is not optimized at all so I would say it's equally fast (CPU vs GPU).
 
 ## Contributions
 
