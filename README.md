@@ -20,7 +20,7 @@ Basically a LSTM that is multidirectional, for example, that can operate on a 2D
 </p>
 
 ## How to get started?
-```
+```bash
 git clone git@github.com:philipperemy/tensorflow-multi-dimensional-lstm.git
 cd tensorflow-multi-dimensional-lstm
 
