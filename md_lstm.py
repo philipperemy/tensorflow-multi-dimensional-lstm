@@ -91,14 +91,9 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
         cell = MultiDimensionalLSTMCell(rnn_size)
 
         # Get the shape of the input (batch_size, x, y, channels)
-        shape = input_data.get_shape().as_list()
-        batch_size = shape[0]
-        X_dim = shape[1]
-        Y_dim = shape[2]
-        channels = shape[3]
+        batch_size, X_dim, Y_dim, channels = input_data.shape.as_list()
         # Window size
-        X_win = sh[0]
-        Y_win = sh[1]
+        X_win, Y_win = sh
         # Get the runtime batch size
         batch_size_runtime = tf.shape(input_data)[0]
 
@@ -108,10 +103,8 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
             offset = tf.zeros([batch_size_runtime, X_win - (X_dim % X_win), Y_dim, channels])
             # Concatenate X dimension
             input_data = tf.concat(axis=1, values=[input_data, offset])
-            # Get new shape
-            shape = input_data.get_shape().as_list()
             # Update shape value
-            X_dim = shape[1]
+            X_dim = input_data.shape[1].value
 
         # The same but for Y axis
         if Y_dim % Y_win != 0:
@@ -119,10 +112,8 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
             offset = tf.zeros([batch_size_runtime, X_dim, Y_win - (Y_dim % Y_win), channels])
             # Concatenate Y dimension
             input_data = tf.concat(axis=2, values=[input_data, offset])
-            # Get new shape
-            shape = input_data.get_shape().as_list()
             # Update shape value
-            Y_dim = shape[2]
+            Y_dim = input_data.shape[2].value
 
         # Get the steps to perform in X and Y axis
         h, w = int(X_dim / X_win), int(Y_dim / Y_win)
@@ -227,7 +218,7 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
 
 def horizontal_standard_lstm(input_data, rnn_size):
     # input is (b, h, w, c)
-    b, h, w, c = input_data.get_shape().as_list()
+    b, h, w, c = input_data.shape.as_list()
     # transpose = swap h and w.
     new_input_data = tf.reshape(input_data, (b * h, w, c))  # horizontal.
     rnn_out, _ = dynamic_rnn(tf.contrib.rnn.LSTMCell(rnn_size),
@@ -239,7 +230,7 @@ def horizontal_standard_lstm(input_data, rnn_size):
 
 def snake_standard_lstm(input_data, rnn_size):
     # input is (b, h, w, c)
-    b, h, w, c = input_data.get_shape().as_list()
+    b, h, w, c = input_data.shape.as_list()
     # transpose = swap h and w.
     new_input_data = tf.reshape(input_data, (b, w * h, c))  # snake.
     rnn_out, _ = dynamic_rnn(tf.contrib.rnn.LSTMCell(rnn_size),
