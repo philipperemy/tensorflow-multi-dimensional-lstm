@@ -127,7 +127,7 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
         # Get the steps to perform in X and Y axis
         h, w = int(X_dim / X_win), int(Y_dim / Y_win)
 
-        # Get the number of features (total number of imput values per step)
+        # Get the number of features (total number of input values per step)
         features = Y_win * X_win * channels
 
         # Reshape input data to a tensor containing the step indexes and features inputs
@@ -182,7 +182,7 @@ def multi_dimensional_rnn_while_loop(rnn_size, input_data, sh, dims=None, scope_
                                lambda: states_ta_.read(h * w),
                                lambda: states_ta_.read(get_up(time_, w)))
 
-            # If it is the first step we read the zero state if not we read the inmediate last
+            # If it is the first step we read the zero state if not we read the immediate last
             state_last = tf.cond(tf.less(zero, tf.mod(time_, tf.constant(w))),
                                  lambda: states_ta_.read(get_last(time_, w)),
                                  lambda: states_ta_.read(h * w))
