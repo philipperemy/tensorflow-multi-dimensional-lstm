@@ -49,9 +49,7 @@ def random_short_diagonal_matrix(h, w):
 
 
 def next_batch(bs, h, w):
-    x = []
-    for i in range(bs):
-        x.append(random_short_diagonal_matrix(h, w))
+    x = [random_short_diagonal_matrix(h, w) for i in range(bs)]
     x = np.array(x)
     y = np.roll(x, shift=-1, axis=2)
     t = get_relevant_prediction_index(y)
@@ -72,10 +70,7 @@ def find_target_for_matrix(y_):
 
 
 def get_relevant_prediction_index(y_):
-    a = []
-    for yy_ in y_:
-        a.append(find_target_for_matrix(yy_))
-    return np.array(a)
+    return np.array([find_target_for_matrix(yy_) for yy_ in y_])
 
 
 if __name__ == '__main__':
